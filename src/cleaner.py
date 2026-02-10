@@ -11,7 +11,7 @@ def is_private_ip(ip):
         return False
 
 def process_firewall_logs(input_path, output_dir):
-    # 1. Convert to type to save RAM
+    # Convert to type to save RAM
     dtype_spec = {
         'firewall_id': 'category',
         'protocol': 'category',
@@ -19,16 +19,16 @@ def process_firewall_logs(input_path, output_dir):
         'reason': 'category',
     }
     
-    # 2. Only use relevant columns
+    # Only use relevant columns
     cols_needed = [
         'timestamp', 'src_ip', 'dst_ip', 'src_port', 
         'dst_port', 'action', 'reason', 'user'
     ]
 
-    # 3. Create output directory
+    # Create output directory
     os.makedirs(output_dir, exist_ok=True)
 
-    # 4. Read chunks
+    # Read chunks
     chunk_size = 100000
     reader = pd.read_csv(
         input_path, 

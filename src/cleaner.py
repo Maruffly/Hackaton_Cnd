@@ -1,8 +1,8 @@
 import pandas as pd
 import ipaddress
 import os
-from utils import is_private_ip
-from utils import is_multicast_broadcast
+from .utils import is_private_ip
+from .utils import is_multicast_broadcast
 
 def process_firewall_logs(input_path, output_dir):
     # Init metrics

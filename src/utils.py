@@ -1,6 +1,4 @@
-import pandas as pd
 import ipaddress
-import os
 
 def is_private_ip(ip):
     """Check if network is private - RFC 1918"""

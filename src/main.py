@@ -1,4 +1,5 @@
 import os
+import logging
 import shutil
 import glob
 from datetime import datetime
@@ -10,6 +11,13 @@ ARCHIVE_DIR = "data/archive"
 PROCESSED_DIR = "data/processed"
 
 def run_pipeline():
+	# 
+	summary_stats = {
+        "timestamp": datetime.now().isoformat(),
+        "files_processed": 0,
+        "total_alerts": 0,
+        "detections_by_type": {}
+    }
 	# Create folder if not exist
 	for folder in [RAW_DIR, PROCESSED_DIR, ARCHIVE_DIR]:
 		os.makedirs(folder, exist_ok=True)
@@ -37,7 +45,7 @@ def run_pipeline():
 			print(f"Success : {file_name} archived in path : {archive_path}")
 
 		except Exception as e:
-			# If a file is corrupted : log error but continue the program
+			# If a file is corrupted : log error and continue exec
 			print(f"Error on {file_name} : {e}")
 
 if __name__ == "__main__":

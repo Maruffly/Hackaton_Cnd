@@ -10,6 +10,14 @@ def is_private_ip(ip):
     except:
         return False
 
+def is_multicast_broadcast(ip):
+    try:
+        addr = ipaddress.ip_address(ip)
+        # Check if this is multicast or broadcast
+        return addr.is_multicast or ip == "255.255.255.255"
+    except:
+        return False
+
 def process_firewall_logs(input_path, output_dir):
     # Convert to type to save RAM
     dtype_spec = {
@@ -42,7 +50,7 @@ def process_firewall_logs(input_path, output_dir):
 
     for i, chunk in enumerate(reader):
         # --- STEP A : Cleaning ---
-        # Clean NA
+        ## Clean NA
         chunk = chunk.dropna(subset=['src_ip', 'dst_ip', 'src_port', 'dst_port', 'timestamp']).copy()
         chunk['src_port'] = chunk['src_port'].astype('uint16')
         chunk['dst_port'] = chunk['dst_port'].astype('uint16')
@@ -51,21 +59,35 @@ def process_firewall_logs(input_path, output_dir):
         chunk = chunk.dropna(subset=['src_ip', 'dst_ip', 'timestamp'])
 
         # --- STEP B :False positive detection ---
-        mask_src_internal = chunk['src_ip'].apply(is_private_ip)
-        mask_dst_internal = chunk['dst_ip'].apply(is_private_ip)
+        ## Check if internal connections
+        is_src_internal = chunk['src_ip'].apply(is_private_ip)
+        is_dst_internal = chunk['dst_ip'].apply(is_private_ip)
+        is_noise_dst = chunk['dst_ip'].apply(is_multicast_broadcast)
 
         chunk['is_false_positive'] = (
-            (mask_src_internal == True) & 
-            (mask_dst_internal == True) & 
-            (chunk['action'] == 'DENY') & 
-            (chunk['reason'] == 'Protocol violation')
-        )
+        ### A : Internal broadcast/multicast
+        (is_src_internal & is_noise_dst) |
+ 
+        ### B : Protocol error : service known to be blocked
+        (is_src_internal & is_dst_internal & (chunk['reason'] == 'Protocol violation')) |
+
+        ### C : Internal ping bloqued (monitoring noise)
+        (is_src_internal & is_dst_internal & (chunk['protocol'] == 'ICMP')))
 
         # --- STEP C : EXPORT ---
         output_file = os.path.join(output_dir, f"firewall_part_{i+1}.csv")
         chunk.to_csv(output_file, index=False)
         
         print(f"Chunk {i+1} finish and saved at {output_file}")
+
+def get_stats(chunk):
+    return {
+        "total_lines": len(chunk),
+        "false_positives": int(chunk['is_false_positive'].sum()),
+        "reconnaissance": int(chunk['is_scan'].sum()),
+        "lateral_movement": int(chunk['is_lateral'].sum()),
+        "noise_broadcast": int(chunk['is_noise'].sum())
+    }
 
 if __name__ == "__main__":
     # Test parameters

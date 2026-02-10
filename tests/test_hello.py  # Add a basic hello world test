@@ -1,0 +1,9 @@
+requirements.txt: 
+pytest
+
+tests/test_hello.py: 
+def test_hello():
+    assert hello() == "Hello, World!"
+
+def hello():
+    return "Hello, World!"

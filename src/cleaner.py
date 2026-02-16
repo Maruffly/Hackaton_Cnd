@@ -1,10 +1,11 @@
 import pandas as pd
 import ipaddress
 import os
-from .utils import is_private_ip
-from .utils import is_multicast_broadcast
+from utils import is_private_ip
+from utils import is_multicast_broadcast
+from db import write_chunk_to_db
 
-def process_firewall_logs(input_path, output_dir):
+def process_firewall_logs(input_path, output_dir, db_engine=None, db_table="firewall_logs"):
     # Init metrics
     file_metrics = {
         "lines": 0,
@@ -88,8 +89,11 @@ def process_firewall_logs(input_path, output_dir):
         output_file = os.path.join(output_dir, f"firewall_part_{i+1}.csv")
         chunk.to_csv(output_file, index=False)
 
+        #===STEP F : DATABASE INSERT ===
+        write_chunk_to_db(chunk, db_engine, db_table)
+
         print(f"Chunk {i+1} finish and saved at {output_file}")
-        return file_metrics
+    return file_metrics
 
 if __name__ == "__main__":
     # Test parameters

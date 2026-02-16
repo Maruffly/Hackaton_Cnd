@@ -5,6 +5,7 @@ import glob
 import json
 from datetime import datetime
 from cleaner import process_firewall_logs
+from db import get_engine
 
 
 RAW_DIR = "data/raw"
@@ -21,6 +22,10 @@ logging.basicConfig(
 )
 
 def run_pipeline():
+	db_url = os.getenv("DB_URL")
+	db_table = os.getenv("DB_TABLE", "firewall_logs")
+	db_engine = get_engine(db_url)
+
 	summary_stats = {
         "timestamp": datetime.now().isoformat(),
         "files_processed": 0,
@@ -47,7 +52,12 @@ def run_pipeline():
 		try:
 			# Execute cleaner & create subfolder to store chunks
 			current_output_dir = os.path.join(PROCESSED_DIR, file_name.replace('.csv', ''))
-			metrics = process_firewall_logs(file_path, current_output_dir)\
+			metrics = process_firewall_logs(
+				file_path,
+				current_output_dir,
+				db_engine=db_engine,
+				db_table=db_table,
+			)
 	
 			# Update global report
 			summary_stats["files_processed"] += 1

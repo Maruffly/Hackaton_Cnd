@@ -1,8 +1,8 @@
 import pandas as pd
 import ipaddress
 import os
-from utils import is_private_ip
-from utils import is_multicast_broadcast
+from .utils import is_private_ip
+from .utils import is_multicast_broadcast
 from db import write_chunk_to_db
 
 def process_firewall_logs(input_path, output_dir, db_engine=None, db_table="firewall_logs"):
